@@ -74,10 +74,10 @@ def main():
     windowManager = WindowManager(dataContainer)
     configureWindowManager(windowManager)
 
-    #dataContainer.load("./example_database_2")
-    #s = Scraper(dataContainer)
-    #s.synchronize(['https://www.imdb.com/filmosearch/?explore=genres&role=nm0000136&ref_=filmo_ref_gnr&sort=user_rating,desc&mode=detail&page=1'])
-    #dataContainer.save('./example_database_3')
+    dataContainer.load("./example_database_2")
+    s = Scraper(dataContainer)
+    s.synchronize(['https://www.imdb.com/filmosearch/?explore=genres&role=nm0000136&ref_=filmo_ref_gnr&sort=user_rating,desc&mode=detail&page=1'])
+    dataContainer.save('./example_database_3')
 
 
     mainModel = MainModel()
