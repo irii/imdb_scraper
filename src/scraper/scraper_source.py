@@ -1,21 +1,12 @@
-class ScrapeResult:    
-    _scraped_ids = []
+from bs4 import BeautifulSoup
 
-    actors = []
-    awards = []
-    movies = []
-    lists = []
-    casts = []
-    images = {}
+from .scrape_container import ScrapeContainer
 
-    def markIdAsSet(self, data_type, id):
-        self._scraped_ids.append(data_type + '::' + id)
-
-    def isIdSet(self, data_type, id):
-        return (data_type + '::' + id) in self._scraped_ids
-
-class ScraperSource:
+class ScraperParser:
     name: str
 
-    def scrape(self, container: ScrapeResult, startLinks, notify):
+    def isSupported(self, link) -> str: # If supported a id is returned
+        return None
+
+    def parse(self, container: ScrapeContainer, link: str, body: BeautifulSoup):
         pass

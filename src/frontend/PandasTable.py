@@ -1,6 +1,9 @@
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
+from PyQt5.QtCore import Qt, QVariant, QAbstractTableModel
 
+import pandas as pd
+
+_INT_TYPES = [pd.Int8Dtype, pd.Int16Dtype, pd.Int32Dtype, pd.Int64Dtype, pd.Int64Index]
+_FLOAT_TYPES = [pd.Float64Index]
 
 class PandasModel(QAbstractTableModel):
     def __init__(self, data, parent=None):
@@ -16,10 +19,21 @@ class PandasModel(QAbstractTableModel):
     def data(self, index, role=Qt.DisplayRole):
         if index.isValid():
             if role == Qt.DisplayRole:
-                return QVariant(str(
-                    self._data.iloc[index.row()][index.column()]))
+                ctype = self._data[self._data.columns[index.column()]].dtype
+                value = self._data.iloc[index.row()][index.column()]
+                return self._getValue(value, ctype)
+        
+        return None
 
-        return QVariant()
+    def _getValue(self, value, columnType):
+        if columnType == object:
+            return value
+        elif columnType in _INT_TYPES:
+            return int(value)
+        elif columnType in _FLOAT_TYPES:
+            return float(value)
+
+        return str(value)
 
     def headerData(self, section, orientation, role):
         # section is the index of the column/row.

@@ -5,7 +5,7 @@ class ActorModel(QObject):
 
     actor: dict = None
     awards: dict = None
-    movies: dict = None
+    movies = None
     imagePath: str = None
 
     def setDataFrame(self, actor, awards, movies, imagePath=None):

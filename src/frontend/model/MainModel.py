@@ -1,4 +1,5 @@
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
+import pandas as pd
 
 CONTENT_TYPE_ACTOR = 'ACTOR'
 CONTENT_TYPE_MOVIE = 'MOVIE'
@@ -38,8 +39,9 @@ class MainModel(QObject):
         self._movies = movies
         self._lists = lists
 
-        list_titles_df = lists.groupby(['Title', 'ID']).first().to_records(index=False)
-        list_titles = [tuple([CONTENT_TYPE_LIST] + x) for x in list_titles_df]
+        list_titles = []
+        for x in lists.groupby(['Title', 'ID']).groups.keys():
+            list_titles.append((CONTENT_TYPE_LIST, x[0], x[1]))
 
         self._selection_items = DEFAULT_SELECTION_ITEMS + list_titles
 
@@ -55,7 +57,7 @@ class MainModel(QObject):
         elif(content_type == CONTENT_TYPE_MOVIE):
             self._content = self._movies
         elif(content_type == CONTENT_TYPE_LIST):
-            self._content = self._lists[(self._lists.ID == identifier)]
+            self._content = self._lists[(self._lists.ID == identifier)][['Name', 'Type', 'ItemId', 'SortId']]
         else:
             self._content_type = None
             self._content = None            

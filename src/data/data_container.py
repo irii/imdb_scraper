@@ -1,17 +1,23 @@
-import os.path
+import os
 import pandas as pd
 
 COLUMNS_ACTORS = ['ID', 'Name', 'DateOfBirth', 'BornIn']
 COLUMNS_ACTORS_KEYS = ['ID']
 
-COLUMNS_MOVIES = ['ID', 'Title', 'Release', 'ImageUrl', 'AvgRating']
+COLUMNS_MOVIES = ['ID', 'Title', 'Description', 'Release', 'AvgRating', 'Genre']
 COLUMNS_MOVIES_KEYS = ['ID']
 
 COLUMNS_LISTS = ['ID', 'SortId', 'Title', 'Type', 'ItemId']
 COLUMNS_LISTS_KEYS = ['ID', 'Type', 'ItemId']
 
-COLUMNS_AWARDS = ['ActorID', 'Name', 'Year', 'Winner', 'MovieId']
+COLUMNS_AWARDS = ['ActorID', 'Name', 'Year', 'Winner', 'Category', 'Description', 'MovieId']
 COLUMNS_AWARDS_KEYS = ['ActorID', 'Name', 'Year', 'MovieId']
+
+COLUMNS_ACTORS_MOVIES = ['MovieID', 'ActorID']
+COLUMNS_ACTORS_MOVIES_KEYS = ['MovieID', 'ActorID']
+
+COLUMNS_ACTORS_MOVIES_SORTING = ['MovieID', 'ActorID', 'Type', 'Value', 'SortId']
+COLUMNS_ACTORS_MOVIES_SORTING_KEYS = ['MovieID', 'ActorID', 'Type', 'Value', 'SortId']
 
 class DataContainer:  
     _image_folder: str
@@ -20,6 +26,7 @@ class DataContainer:
     movies: pd.DataFrame
     lists: pd.DataFrame
     awards: pd.DataFrame
+    actors_movies: pd.DataFrame
 
     database_loaded: bool = False
 
@@ -28,23 +35,30 @@ class DataContainer:
         self.movies = pd.DataFrame ([], columns = COLUMNS_MOVIES)
         self.lists = pd.DataFrame ([], columns = COLUMNS_LISTS)
         self.awards = pd.DataFrame ([], columns = COLUMNS_AWARDS)
+        self.actors_movies = pd.DataFrame([], columns = COLUMNS_ACTORS_MOVIES)
 
     def save(self, folder):
         actors = os.path.join(folder, 'actors.csv')
         movies = os.path.join(folder, 'movies.csv')
         lists = os.path.join(folder, 'lists.csv')
         awards = os.path.join(folder, 'awards.csv')
+        actors_movies = os.path.join(folder, 'actors_movies.csv')
 
         self.actors.to_csv(actors)
         self.movies.to_csv(movies)
         self.lists.to_csv(lists)
         self.awards.to_csv(awards)
+        self.actors_movies.to_csv(actors_movies)
 
     def getImage(self, id):
         if self._image_folder == None:
             return None
 
-        return os.path.join(self._image_folder, id)
+        for f in os.listdir(self._image_folder):
+            if os.path.splitext(f)[0].lower() == id.lower():
+                return os.path.join(self._image_folder, f)
+
+        return None
 
 
     def getImages(self):
@@ -84,6 +98,7 @@ class DataContainer:
         movies = os.path.join(folder, 'movies.csv')
         lists = os.path.join(folder, 'lists.csv')
         awards = os.path.join(folder, 'awards.csv')
+        actors_movies = os.path.join(folder, 'actors_movies.csv')
         self._image_folder = os.path.join(folder, 'images')
 
         if not os.path.isdir(self._image_folder):
@@ -92,7 +107,6 @@ class DataContainer:
         if os.path.isfile(actors):
             self.actors = pd.read_csv(actors)
             
-
         if os.path.isfile(movies):
             self.movies = pd.read_csv(movies)
             
@@ -102,8 +116,19 @@ class DataContainer:
         if os.path.isfile(awards):
             self.awards = pd.read_csv(awards)
 
+        if os.path.isfile(actors_movies):
+            self.actors_movies = pd.read_csv(actors_movies)
+
         self.database_loaded = True
 
+
+    def migrateActorsMovies(self, actorsMovies, delete_orphanded_items):
+        df2 = pd.DataFrame(actorsMovies, columns=COLUMNS_ACTORS_MOVIES)
+
+        if delete_orphanded_items == True:
+            self.actors_movies = df2
+        else:
+            self.actors_movies = self.actors_movies.set_index(COLUMNS_ACTORS_MOVIES_SORTING_KEYS).combine_first(df2.set_index(COLUMNS_ACTORS_MOVIES_SORTING_KEYS))
 
     def migrateActors(self, actors, delete_orphanded_items):
         df2 = pd.DataFrame(actors, columns=COLUMNS_ACTORS)

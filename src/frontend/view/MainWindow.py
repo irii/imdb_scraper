@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex, pyqtSlot, QVariant, Qt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QDialog, QFileDialog
+from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow, QWidget, QDialog, QFileDialog
 from PyQt5.QtGui import QStandardItemModel
 from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.QtWidgets import QPushButton
@@ -49,6 +49,12 @@ class MainWindow(QMainWindow):
 
     combobox_model = ComboBoxModel([])
 
+    statusBarWidget = None
+
+    def closeEvent(self, event):
+        event.accept()
+        self.controller.closeAll()
+
     def __init__(self, model: MainModel, controller: MainController = None):
         super().__init__()
 
@@ -58,6 +64,9 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)        
         self.connectUi()
+
+        self.statusBarWidget = QLabel(text="Database not loaded")
+        self.statusBar().addWidget(self.statusBarWidget)
 
         self.data_updated() # Initial view state initialization
       
@@ -89,10 +98,16 @@ class MainWindow(QMainWindow):
         self.controller.saveDatabase()
 
     def data_updated(self):
+        if self.model.database_loaded:
+            self.statusBarWidget.setText('Database loaded')
+        else:
+            self.statusBarWidget.setText('Database not loaded')
+
         self.combobox_model._list = self.model.selection_items
         self.ui.comboBox_select_type.setModel(self.combobox_model)
         self.ui.pushButton_scrape.setEnabled(self.model.database_loaded)
         self.ui.tableView_items.setEnabled(self.model.database_loaded)
+        self.ui.actionSave_Database.setEnabled(self.model.database_loaded)
 
         data = self.model.content
         if data is None:
@@ -105,7 +120,16 @@ class MainWindow(QMainWindow):
         
     @pyqtSlot(QModelIndex)
     def table_double_click(self, index):
-        itemId = index.data()
+        data = self.model.content.iloc[index.row()]
 
         if self.model.content_type == CONTENT_TYPE_ACTOR:
-            self.controller.display_actor(itemId)
+            self.controller.display_actor(data['ID'])
+            
+        elif self.model.content_type == CONTENT_TYPE_MOVIE:
+            self.controller.display_movie(data['ID'])
+
+        elif self.model.content_type == CONTENT_TYPE_LIST:
+            if data['Type'] == 'Actor':
+                self.controller.display_actor(data['ItemId'])
+            elif data['Type'] == 'Movie':
+                self.controller.display_movie(data['ItemId'])
