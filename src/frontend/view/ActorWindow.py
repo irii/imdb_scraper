@@ -55,4 +55,4 @@ class ActorWindow(BaseChildWindow):
     @pyqtSlot(QModelIndex)
     def table_movies_double_click(self, index):
         data = self.model.movies.iloc[index.row()]
-        self.controller.display_movie(data['ID'])
+        self.controller.display_movie(data['MovieID'])

@@ -30,7 +30,7 @@ class Scraper:
             if r.status_code == 200:
                 self.dataContainer.saveImage(k, r.content)
 
-    def _process_handle_link(self, container, link):
+    def _process_handle_link(self, container, link, priority):
         for x in self.parsers:
             id = x.isSupported(link)
             if id:
@@ -42,42 +42,39 @@ class Scraper:
                 page = requests.get(link, headers=_HEADERS)
                 soup = BeautifulSoup(page.text, 'html.parser')
 
-                return x.parse(container, link, id, soup) or []
+                return x.parse(container, link, priority, id, soup) or []
 
         return []
 
-    def _process(self, startLinks, notify=None) -> ScrapeContainer:
+    def _process(self, startLinks, notify=None, maxScrapeCount: int = None) -> ScrapeContainer:
         container = ScrapeContainer()
+        for sl in startLinks:
+            container.queue.enqueue(sl, 1)
 
-        queue = [] + startLinks
         scrapedCount = 0
 
-        total_count = len(startLinks)
+        while(container.queue.getLength() > 0 and (maxScrapeCount is None or scrapedCount < maxScrapeCount)):
+            work = container.queue.dequeue()
 
-        while((len(queue) > 0) and (scrapedCount < 400)):
-            work = queue.pop(0)
+            if work is None:
+                break
 
             if(notify):
-                notify(work, scrapedCount, total_count)
+                notify(work[0], scrapedCount, container.queue.getTotalCount())
 
-            
             scrapedCount = scrapedCount + 1
-            new_queue_items = self._process_handle_link(container, work)
-
-
-            total_count = total_count + len(new_queue_items)
-
-            queue = queue + new_queue_items
+            self._process_handle_link(container, work[0], work[1])
 
         return container
 
            
-    def synchronize(self, urls, progress_callback=None, delete_orphanded_items=False):
+    def synchronize(self, urls, progress_callback=None, delete_orphanded_items=False, maxScrapeCount: int = None):
         result = self._process(urls, progress_callback)
 
         self.dataContainer.migrateMovies(result.movies, delete_orphanded_items)
         self.dataContainer.migrateActors(result.actors, delete_orphanded_items)
         self.dataContainer.migrateLists(result.lists, delete_orphanded_items)
         self.dataContainer.migrateAwards(result.awards, delete_orphanded_items)
+        self.dataContainer.migrateActorsMovies(result.actorsMovies, delete_orphanded_items)
 
         self._downloadImages(result.images, delete_orphanded_items, progress_callback)

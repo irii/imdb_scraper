@@ -1,6 +1,7 @@
 import re
 
 from bs4 import BeautifulSoup
+from requests.api import post
 from scraper.scrape_container import ScrapeContainer
 from scraper.scraper_source import ScraperParser
 
@@ -23,13 +24,13 @@ class ImdbMovieParser(ScraperParser):
 
         return super().isSupported(link)
 
-    def parse(self, container: ScrapeContainer, link: str, id: str, soup: BeautifulSoup):
+    def parse(self, container: ScrapeContainer, link: str, priority: int, id: str, soup: BeautifulSoup):
         if id.startswith(_CAST_ID_IDENTIFIER):
-            return self._parse_movie_credits(container, link, id[_CAST_ID_IDENTIFIER_LEN:], soup)
+            return self._parse_movie_credits(container, link, priority, id[_CAST_ID_IDENTIFIER_LEN:], soup)
 
-        return self._parse_movie(container, link, id, soup)
+        return self._parse_movie(container, link, priority, id, soup)
 
-    def _parse_movie(self, container: ScrapeContainer, link: str, id: str, soup: BeautifulSoup):
+    def _parse_movie(self, container: ScrapeContainer, link: str, priority: int, id: str, soup: BeautifulSoup):
         title = soup.find('h1').find(text=True, recursive=False).strip()
         rating_el = soup.find('span', attrs={'itemprop': 'ratingValue'})
 
@@ -39,26 +40,33 @@ class ImdbMovieParser(ScraperParser):
             year = int(year_el.find('a').text.strip(), base=10)
 
         posterEl = soup.find('div', {'class': 'poster'})
-        if(posterEl):
-            link = Utils.prepareImageLink(posterEl.find('img')['src'])
+        if posterEl:
+            posterEl = posterEl.find('img')
+
+        if posterEl:
+            link = Utils.prepareImageLink(posterEl['src'])
             if link:
                 container.images['movie_' + id + "." + link[1]] = link[0]
+
+        rating = None
+        if rating_el:
+            rating = float(rating_el.text.strip())
 
         container.movies.append({
             'ID': id,
             'Title': title,
-            'AvgRating': float(rating_el.text.strip()),
+            'AvgRating': rating,
             'Release': year
         })
 
-        return ['https://www.imdb.com/title/' + id + '/fullcredits']
+        container.queue.enqueue('https://www.imdb.com/title/' + id + '/fullcredits', priority + 1)
 
 
-    def _parse_movie_credits(self, container: ScrapeContainer, link: str, id: str, soup: BeautifulSoup):
+    def _parse_movie_credits(self, container: ScrapeContainer, link: str, priority: int, id: str, soup: BeautifulSoup):
         actorIds = []
 
         actor_urls = soup.find_all('a', {'href': Utils.ACTOR_ID_PARSER})
         for x in actor_urls:
-            actorIds.append(Utils.ACTOR_ID_PARSER.match(x).group('id'))
+            actorIds.append(Utils.ACTOR_ID_PARSER.match(x['href']).group('Id'))
 
         return actorIds

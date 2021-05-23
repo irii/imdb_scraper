@@ -1,3 +1,5 @@
+from .scraper_queue import ScraperQueue
+
 class ScrapeContainer:
     _scraped_ids = []
 
@@ -7,6 +9,8 @@ class ScrapeContainer:
     lists = []
     actorsMovies = []
     images = {}
+
+    queue: ScraperQueue = ScraperQueue()
 
     def markIdAsSet(self, data_type, id):
         self._scraped_ids.append(data_type + '::' + id)

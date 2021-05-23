@@ -14,12 +14,10 @@ class ImdbListParser(ScraperParser):
 
         return super().isSupported(link)
 
-    def parse(self, container: ScrapeContainer, link: str, id: str, soup: BeautifulSoup):
+    def parse(self, container: ScrapeContainer, link: str, priority: int, id: str, soup: BeautifulSoup):
         title = soup.find("h1").text
         lister_list = soup.findAll(
             "div", attrs={'class': 'lister-item mode-detail'})
-
-        queue = []
 
         sortId = 1
 
@@ -29,8 +27,7 @@ class ImdbListParser(ScraperParser):
 
             match = Utils.ACTOR_ID_PARSER.match(link)
             if(match):
-                queue.append(f'https://www.imdb.com/name/' +
-                             match.group('Id') + '/bio')     # Queue entry
+                container.queue.enqueue('https://www.imdb.com/name/' + match.group('Id') + '/bio', priority) # Queue entry
 
                 # Add scrape result
                 container.lists.append({
@@ -43,8 +40,7 @@ class ImdbListParser(ScraperParser):
 
             match = Utils.MOVIE_ID_PARSER.match(link)
             if(match):
-                queue.append('https://www.imdb.com/title/' +
-                             match.group('Id'))  # Queue entry
+                container.queue.enqueue('https://www.imdb.com/title/' + match.group('Id') + '', priority) # Queue entry
 
                 # Add scrape result
                 container.lists.append({
@@ -56,4 +52,3 @@ class ImdbListParser(ScraperParser):
                 })
 
             sortId = sortId + 1
-        return queue

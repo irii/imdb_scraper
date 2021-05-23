@@ -20,6 +20,7 @@ COLUMNS_ACTORS_MOVIES_SORTING = ['MovieID', 'ActorID', 'Type', 'Value', 'SortId'
 COLUMNS_ACTORS_MOVIES_SORTING_KEYS = ['MovieID', 'ActorID', 'Type', 'Value', 'SortId']
 
 class DataContainer:  
+    _database_folder: str
     _image_folder: str
 
     actors: pd.DataFrame
@@ -35,14 +36,14 @@ class DataContainer:
         self.movies = pd.DataFrame ([], columns = COLUMNS_MOVIES)
         self.lists = pd.DataFrame ([], columns = COLUMNS_LISTS)
         self.awards = pd.DataFrame ([], columns = COLUMNS_AWARDS)
-        self.actors_movies = pd.DataFrame([], columns = COLUMNS_ACTORS_MOVIES)
+        self.actors_movies = pd.DataFrame([], columns = COLUMNS_ACTORS_MOVIES_SORTING)
 
-    def save(self, folder):
-        actors = os.path.join(folder, 'actors.csv')
-        movies = os.path.join(folder, 'movies.csv')
-        lists = os.path.join(folder, 'lists.csv')
-        awards = os.path.join(folder, 'awards.csv')
-        actors_movies = os.path.join(folder, 'actors_movies.csv')
+    def save(self):
+        actors = os.path.join(self._database_folder, 'actors.csv')
+        movies = os.path.join(self._database_folder, 'movies.csv')
+        lists = os.path.join(self._database_folder, 'lists.csv')
+        awards = os.path.join(self._database_folder, 'awards.csv')
+        actors_movies = os.path.join(self._database_folder, 'actors_movies.csv')
 
         self.actors.to_csv(actors)
         self.movies.to_csv(movies)
@@ -93,6 +94,7 @@ class DataContainer:
 
     def load(self, folder):
         self._initEmpty()
+        self._database_folder = folder
 
         actors = os.path.join(folder, 'actors.csv')
         movies = os.path.join(folder, 'movies.csv')
@@ -123,7 +125,7 @@ class DataContainer:
 
 
     def migrateActorsMovies(self, actorsMovies, delete_orphanded_items):
-        df2 = pd.DataFrame(actorsMovies, columns=COLUMNS_ACTORS_MOVIES)
+        df2 = pd.DataFrame(actorsMovies, columns=COLUMNS_ACTORS_MOVIES_SORTING)
 
         if delete_orphanded_items == True:
             self.actors_movies = df2

@@ -21,7 +21,7 @@ class ActorController:
 
         movies = self._dataContainer.actors_movies[(self._dataContainer.actors_movies['ActorID'] == id)]
         movies = movies.merge(moviesReduced, how='left', left_on='MovieID', right_on='ID')
-        movies = movies[['Title', 'ID']]
+        movies = movies[['Title', 'MovieID']]
 
         self.model.setDataFrame(actor, awards, movies, self._dataContainer.getImage('actor_' + id))        
 

@@ -38,7 +38,9 @@ class MainController(QObject):
         enriched_list = self._dataContainer.lists.merge(moviesReduced, how='left', left_on=['Type', 'ItemId'], right_on=['Type', 'ID_Movie'])
         enriched_list = enriched_list.merge(actorsReduced, how='left', left_on=['Type', 'ItemId'], right_on=['Type', 'ID_Actor'])
         enriched_list['Name'] = None
-        enriched_list['Name'] = enriched_list.apply(lambda row: row['Name_Movie'] if pd.isnull(row['Name_Actor']) else row['Name_Actor'], axis=1)
+
+        if enriched_list['Name'].count() > 0:
+            enriched_list['Name'] = enriched_list.apply(lambda row: row['Name_Movie'] if pd.isnull(row['Name_Actor']) else row['Name_Actor'], axis=1)
 
         enriched_list = enriched_list[['ID', 'SortId', 'Title', 'Type', 'ItemId', 'Name']]
 

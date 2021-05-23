@@ -25,13 +25,13 @@ class ImdbActorParser(ScraperParser):
         return super().isSupported(link)
 
 
-    def parse(self, container: ScrapeContainer, link: str, id: str, soup: BeautifulSoup):
+    def parse(self, container: ScrapeContainer, link: str, priority: int, id: str, soup: BeautifulSoup):
         if id.startswith(_AWARD_ID_IDENTIFIER):
-            return self._parse_actor_awards(container, link, id[_AWARD_ID_IDENTIFIER_LEN:], soup)
+            return self._parse_actor_awards(container, link, priority, id[_AWARD_ID_IDENTIFIER_LEN:], soup)
 
-        return self._parse_actor(container, link, id, soup)
+        return self._parse_actor(container, link, priority, id, soup)
 
-    def _parse_actor(self, container: ScrapeContainer, link: str, id: str, soup: BeautifulSoup):
+    def _parse_actor(self, container: ScrapeContainer, link: str, priority: int, id: str, soup: BeautifulSoup):
         name = soup.find("h3").text.strip()
         bornInfo = soup.find("time")
         imageUrlEl = soup.find('img', {'class': 'poster'})
@@ -59,17 +59,13 @@ class ImdbActorParser(ScraperParser):
             'BornIn': bornIn
         })
 
-        return [
-            'https://www.imdb.com/name/' + id + '/awards',
-            'https://www.imdb.com/filmosearch/?explore=genres&role=' + id + '&ref_=filmo_ref_gnr&sort=user_rating,desc&mode=detail&page=1'
-            ]
+        container.queue.enqueue('https://www.imdb.com/name/' + id + '/awards', priority)
+        container.queue.enqueue('https://www.imdb.com/filmosearch/?explore=genres&role=' + id + '&ref_=filmo_ref_gnr&sort=user_rating,desc&mode=detail&page=1', priority + 1)
 
-    def _parse_actor_awards(self, container: ScrapeContainer, link: str, id: str, soup: BeautifulSoup):
+    def _parse_actor_awards(self, container: ScrapeContainer, link: str, priority: int, id: str, soup: BeautifulSoup):
         alist = soup.find('div', class_="article listo")
 
         award_name = None
-
-        queue = []
 
         for el in alist:
             if(el.name == 'h3'):
@@ -102,8 +98,7 @@ class ImdbActorParser(ScraperParser):
                                 movie_link['href'])
                             if(movie_link_match):
                                 movie_id = movie_link_match.group('Id')
-                                queue.append(
-                                    'https://www.imdb.com/title/' + movie_id)
+                                container.queue.enqueue('https://www.imdb.com/title/' + movie_id, priority + 1)
 
                     award_description = a.find('td', class_="award_description").next_element.strip()
 
@@ -116,5 +111,3 @@ class ImdbActorParser(ScraperParser):
                         'Winner': winner,
                         'MovieId': movie_id
                     })
-
-        return queue

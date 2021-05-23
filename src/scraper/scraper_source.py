@@ -8,5 +8,5 @@ class ScraperParser:
     def isSupported(self, link) -> str: # If supported a id is returned
         return None
 
-    def parse(self, container: ScrapeContainer, link: str, id: str, soup: BeautifulSoup):
+    def parse(self, container: ScrapeContainer, link: str, priority: int, id: str, soup: BeautifulSoup):
         pass

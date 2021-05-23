@@ -15,7 +15,7 @@ class ImdbFilmoSearchParser(ScraperParser):
         return super().isSupported(link)
 
 
-    def parse(self, container: ScrapeContainer, link: str, id: str, soup: BeautifulSoup):
+    def parse(self, container: ScrapeContainer, link: str, priority: int, id: str, soup: BeautifulSoup):
         actorMatch = Utils.FILMOSEARCH_EXTRACT_ACTORID_PARSER.match(link)
         if not actorMatch:
             return []
@@ -27,8 +27,6 @@ class ImdbFilmoSearchParser(ScraperParser):
 
         sort_type = soup.find('select', {'class' : 'lister-sort-by'}).find('option', {'selected': 'selected'}).text
 
-        queue = []
-
         sortId = 1
 
         for entry in lister_list:
@@ -39,16 +37,17 @@ class ImdbFilmoSearchParser(ScraperParser):
                 titleId = Utils.MOVIE_ID_PARSER.match(link["href"]).group('Id')
 
                 container.actorsMovies.append({
-                    'ActorId': actorId,
-                    'MovieId': titleId,
+                    'ActorID': actorId,
+                    'MovieID': titleId,
                     'SortId': sortId,
-                    'Type': sort_type
+                    'Type': sort_type,
+                    'Value': 0
                 })
+
+                sortId = sortId + 1
                 
-                queue.append('https://www.imdb.com/title/' + titleId)
+                container.queue.enqueue('https://www.imdb.com/title/' + titleId, priority + 1)
 
         next_page = soup.find('a', {'class': 'lister-page-next next-page'})
         if next_page:
-            queue.append('https://www.imdb.com/filmosearch/' + next_page['href'])
-
-        return queue
+            container.queue.enqueue('https://www.imdb.com/filmosearch/' + next_page['href'], priority)
