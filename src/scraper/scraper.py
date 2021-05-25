@@ -3,6 +3,10 @@ from typing import List
 from bs4 import BeautifulSoup
 import requests
 import pandas as pd
+from scraper.imdb.imdb_actor_parser import ImdbActorParser
+from scraper.imdb.imdb_filmosearch_parser import ImdbFilmoSearchParser
+
+from scraper.imdb.imdb_movie_parser import ImdbMovieParser
 
 from .scraper_source import ScrapeContainer, ScraperParser
 from data.data_container import DataContainer
@@ -30,8 +34,8 @@ class Scraper:
             if r.status_code == 200:
                 self.dataContainer.saveImage(k, r.content)
 
-    def _process_handle_link(self, container, link, priority):
-        for x in self.parsers:
+    def _process_handle_link(self, container, link, priority, parsers):
+        for x in parsers:
             id = x.isSupported(link)
             if id:
                 if container.isIdSet(x.name, id):
@@ -46,7 +50,7 @@ class Scraper:
 
         return []
 
-    def _process(self, startLinks, notify=None, maxScrapeCount: int = None) -> ScrapeContainer:
+    def _process(self, startLinks, parsers, notify=None, maxScrapeCount: int = None) -> ScrapeContainer:
         container = ScrapeContainer()
         for sl in startLinks:
             container.queue.enqueue(sl, 1)
@@ -63,13 +67,45 @@ class Scraper:
                 notify(work[0], scrapedCount, container.queue.getTotalCount())
 
             scrapedCount = scrapedCount + 1
-            self._process_handle_link(container, work[0], work[1])
+            self._process_handle_link(container, work[0], work[1], parsers)
 
         return container
 
+    # This method gets called, if an actor is requested which was not fully scraped in the previous process.
+    # This will start a small scrape process and merge it into the current database
+    def fetchActor(self, actorId):
+        df = self.dataContainer.actors
+        partialActorData = df[(df["ID"] == actorId)]
+
+        if len(partialActorData) == 0:
+            return
+
+        if partialActorData["Completed"] == False:
+            pass
+
+        result = self._process([partialActorData["SourceUrl"]], [ImdbActorParser(), ImdbFilmoSearchParser()])
+        self.dataContainer.migrateActors(result.actors, False)
+        self.dataContainer.migrateAwards(result.awards, False)
+        self._downloadImages(result.images, False)
+
+    def fetchMovie(self, movieId):
+        df = self.dataContainer.movies
+        partialMovieData = df[(df["ID"] == movieId)]
+
+        if len(partialMovieData) == 0:
+            return
+
+        if partialMovieData["Completed"] == False:
+            pass
+
+        result = self._process([partialMovieData["SourceUrl"]], [ImdbMovieParser()])
+        self.dataContainer.migrateActors(result.actors, False)
+        self.dataContainer.migrateAwards(result.awards, False)
+        self._downloadImages(result.images, False)
+
            
     def synchronize(self, urls, progress_callback=None, delete_orphanded_items=False, maxScrapeCount: int = None):
-        result = self._process(urls, progress_callback)
+        result = self._process(urls, self.parsers, progress_callback)
 
         self.dataContainer.migrateMovies(result.movies, delete_orphanded_items)
         self.dataContainer.migrateActors(result.actors, delete_orphanded_items)

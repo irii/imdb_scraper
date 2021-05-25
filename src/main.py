@@ -74,10 +74,10 @@ def main():
     windowManager = WindowManager(dataContainer)
     configureWindowManager(windowManager)
 
-    dataContainer.load("./test")
-    s = Scraper(dataContainer)
-    s.synchronize(['https://www.imdb.com/list/ls053501318/'], maxScrapeCount=600)
-    dataContainer.save()
+    #dataContainer.load("./test")
+    #s = Scraper(dataContainer)
+    #s.synchronize(['https://www.imdb.com/list/ls053501318/'], maxScrapeCount=600)
+    #dataContainer.save()
 
 
     mainModel = MainModel()
