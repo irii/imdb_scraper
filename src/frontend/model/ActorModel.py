@@ -2,6 +2,7 @@ from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 
 class ActorModel(QObject):
     data_updated = pyqtSignal()
+    data_proccessing = pyqtSignal()
 
     actor: dict = None
     awards: dict = None

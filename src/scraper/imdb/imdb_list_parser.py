@@ -14,7 +14,7 @@ class ImdbListParser(ScraperParser):
 
         return super().isSupported(link)
 
-    def parse(self, container: ScrapeContainer, link: str, priority: int, id: str, soup: BeautifulSoup):
+    def parse(self, container: ScrapeContainer, list_link: str, priority: int, id: str, soup: BeautifulSoup):
         title = soup.find("h1").text
         lister_list = soup.findAll(
             "div", attrs={'class': 'lister-item mode-detail'})
@@ -27,7 +27,7 @@ class ImdbListParser(ScraperParser):
 
             match = Utils.ACTOR_ID_PARSER.match(link)
             if(match):
-                container.queue.enqueue('https://www.imdb.com/name/' + match.group('Id') + '/bio', priority) # Queue entry
+                container.queue.enqueue('https://www.imdb.com/name/' + match.group('Id') + '/bio', priority + 1) # Queue entry
 
                 # Add scrape result
                 container.lists.append({
@@ -35,12 +35,20 @@ class ImdbListParser(ScraperParser):
                     'Title': title,
                     'SortId': sortId,
                     'Type': 'Actor',
-                    'ItemId': match.group('Id')
+                    'ItemId': match.group('Id'),
+                    'SourceUrl': list_link
+                })
+
+                container.actors.append({
+                    'ID': id,
+                    'Name': h3.text.strip(),
+                    'Completed': False,
+                    'SourceUrl': link
                 })
 
             match = Utils.MOVIE_ID_PARSER.match(link)
             if(match):
-                container.queue.enqueue('https://www.imdb.com/title/' + match.group('Id') + '', priority) # Queue entry
+                container.queue.enqueue('https://www.imdb.com/title/' + match.group('Id') + '', priority + 1) # Queue entry
 
                 # Add scrape result
                 container.lists.append({
@@ -48,7 +56,15 @@ class ImdbListParser(ScraperParser):
                     'Title': title,
                     'SortId': sortId,
                     'Type': 'Movie',
-                    'ItemId': match.group('Id')
+                    'ItemId': match.group('Id'),
+                    'SourceUrl': list_link
+                })
+
+                container.movies.append({
+                    'ID': id,
+                    'Title': h3.text.strip(),
+                    'Completed': False,
+                    'SourceUrl': link
                 })
 
             sortId = sortId + 1

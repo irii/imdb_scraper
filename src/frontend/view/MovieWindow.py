@@ -23,6 +23,11 @@ class MovieWindow(BaseChildWindow):
         self.model.data_updated.connect(self.data_updated)
         self.ui.tableView_cast.doubleClicked.connect(self.table_cast_double_click)
 
+        self.model.data_proccessing.connect(self.data_processing)
+
+    def data_processing(self):
+        pass
+
     def data_updated(self):
         self.setWindowTitle("Movie - " + self.model.movie["Title"] + " (" + self.model.movie["ID"] + ")")
 

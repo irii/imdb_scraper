@@ -32,21 +32,21 @@ from frontend.model.MovieModel import MovieModel
 
 from scraper.scraper import Scraper
 
-def scrapeViewFactory(windowManager, dataContainer, *args):
+def scrapeViewFactory(windowManager, dataContainer, scraper, *args):
     model = ScrapeModel()
     ctrl = ScrapeController(dataContainer, model, args[0])
     w = ScrapeDialog(model, ctrl)
     return w
 
-def actorViewFactory(windowManager, dataContainer, *args):
+def actorViewFactory(windowManager, dataContainer, scraper, *args):
     model = ActorModel()
-    ctrl = ActorController(model, dataContainer, windowManager)
+    ctrl = ActorController(model, dataContainer, windowManager, scraper)
     view = ActorWindow(model, ctrl)
 
     ctrl.set_actor(args[0])
     return view
 
-def movieViewFactory(windowManager, dataContainer, *args):
+def movieViewFactory(windowManager, dataContainer, scraper, *args):
     model = MovieModel()
     ctrl = MovieController(model, dataContainer, windowManager)
     view = MovieWindow(model, ctrl)
@@ -57,7 +57,6 @@ def movieViewFactory(windowManager, dataContainer, *args):
 # Decouple view logic from controller logic
 def configureWindowManager(windowManager: WindowManager):
     # Register View factories which can be called by an controller instance
-    
     windowManager.register_view('ABOUT', lambda *a: 'ABOUT', lambda *a: AboutWindow(AboutController()))
     windowManager.register_view('ACTOR', lambda *a: 'ACTOR-' + a[0], actorViewFactory)
     windowManager.register_view('MOVIE', lambda *a: 'MOVIE-' + str(id(a[0])), movieViewFactory)
@@ -69,15 +68,16 @@ def main():
     # Currently: WindowManager, DataContainer
        
     dataContainer = DataContainer()
+    scraper = Scraper(dataContainer)
 
 
-    windowManager = WindowManager(dataContainer)
+    windowManager = WindowManager(dataContainer, scraper)
     configureWindowManager(windowManager)
 
-    #dataContainer.load("./test")
-    #s = Scraper(dataContainer)
-    #s.synchronize(['https://www.imdb.com/list/ls053501318/'], maxScrapeCount=600)
-    #dataContainer.save()
+    dataContainer.load("./test")
+    s = Scraper(dataContainer)
+    s.synchronize(['https://www.imdb.com/list/ls053501318/'])
+    dataContainer.save()
 
 
     mainModel = MainModel()

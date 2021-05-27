@@ -1,10 +1,10 @@
 import os
 import pandas as pd
 
-COLUMNS_ACTORS = ['ID', 'Name', 'DateOfBirth', 'BornIn', 'SourceUrl', 'Completed'] # Supports partial data
+COLUMNS_ACTORS = ['ID', 'Name', 'DateOfBirth', 'BornIn', 'ImageUrl', 'SourceUrl', 'Completed'] # Supports partial data
 COLUMNS_ACTORS_KEYS = ['ID']
 
-COLUMNS_MOVIES = ['ID', 'Title', 'Description', 'Release', 'AvgRating', 'Genre', 'SourceUrl', 'Completed'] # Supports partial data
+COLUMNS_MOVIES = ['ID', 'Title', 'Description', 'Release', 'AvgRating', 'Genre', 'ImageUrl', 'SourceUrl', 'Completed'] # Supports partial data
 COLUMNS_MOVIES_KEYS = ['ID']
 
 COLUMNS_LISTS = ['ID', 'SortId', 'Title', 'Type', 'ItemId', 'SourceUrl']
@@ -16,8 +16,8 @@ COLUMNS_AWARDS_KEYS = ['ActorID', 'Name', 'Year', 'MovieId']
 COLUMNS_ACTORS_MOVIES = ['MovieID', 'ActorID', 'SourceUrl']
 COLUMNS_ACTORS_MOVIES_KEYS = ['MovieID', 'ActorID']
 
-COLUMNS_ACTORS_MOVIES_SORTING = ['MovieID', 'ActorID', 'Type', 'Value', 'SortId', 'SourceUrl']
-COLUMNS_ACTORS_MOVIES_SORTING_KEYS = ['MovieID', 'ActorID', 'Type', 'Value', 'SortId']
+COLUMNS_ACTORS_MOVIES_SORTING = ['MovieID', 'ActorID', 'Type', 'Value', 'SourceUrl']
+COLUMNS_ACTORS_MOVIES_SORTING_KEYS = ['MovieID', 'ActorID', 'Type', 'Value']
 
 class DataContainer:  
     _database_folder: str

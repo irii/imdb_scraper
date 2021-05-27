@@ -2,6 +2,7 @@ from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 
 class MovieModel(QObject):
     data_updated = pyqtSignal()
+    data_proccessing = pyqtSignal()
 
     actors = None
     movie: dict = None

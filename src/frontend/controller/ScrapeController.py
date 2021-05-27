@@ -1,7 +1,7 @@
 from frontend.model.ScrapeModel import ScrapeModel
 from PyQt5 import QtCore
 
-from scraper.scraper import Scraper
+from scraper.scraper import Scraper, LambdaScraperEventListener
 
 
 class ScrapeBackgroundTask(QtCore.QThread):
@@ -16,7 +16,7 @@ class ScrapeBackgroundTask(QtCore.QThread):
         self.delete_orphanded_items = delete_orphanded_items
 
     def run(self):
-        self.scraper.synchronize(self.startUrls, lambda url, current, totalCount: self.progress.emit(url, current, totalCount), self.delete_orphanded_items)
+        self.scraper.synchronize(self.startUrls, delete_orphanded_items=self.delete_orphanded_items, listener=LambdaScraperEventListener(processing=lambda type, url, count, totalCount: self.progress.emit(url, count, totalCount)))
         self.finished.emit()
 
 

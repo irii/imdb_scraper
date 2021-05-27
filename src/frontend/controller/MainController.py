@@ -1,6 +1,7 @@
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 
 from data.data_container import DataContainer
+from scraper.scraper import Scraper
 from frontend.model.MainModel import MainModel
 from frontend.WindowManager import WindowManager
 
@@ -9,7 +10,6 @@ import pandas as pd
 class MainController(QObject):
     _windowManager: WindowManager
     _dataContainer: DataContainer
-
     _current_database_folder: str
 
     def __init__(self, windowManager: WindowManager, model: MainModel, dataContainer: DataContainer):
