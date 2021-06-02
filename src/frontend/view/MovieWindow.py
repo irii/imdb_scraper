@@ -10,6 +10,8 @@ from frontend.BaseWindow import BaseChildWindow
 
 from frontend.PandasTable import PandasModel
 
+import pandas as pd
+
 class MovieWindow(BaseChildWindow):
     def __init__(self, model: MovieModel, ctrl: MovieController):
         super().__init__()
@@ -22,8 +24,9 @@ class MovieWindow(BaseChildWindow):
 
         self.model.data_updated.connect(self.data_updated)
         self.ui.tableView_cast.doubleClicked.connect(self.table_cast_double_click)
+        self.model.data_processing.connect(lambda progress: [self.setEnabled(False), self.ui.progressBar_scraping.setVisible(True), self.ui.progressBar_scraping.setValue(progress)])
 
-        self.model.data_proccessing.connect(self.data_processing)
+        self.model.data_processing.connect(self.data_processing)
 
     def data_processing(self):
         pass
@@ -33,14 +36,24 @@ class MovieWindow(BaseChildWindow):
 
         if self.model.imagePath:
             pixmap = QPixmap(self.model.imagePath)
-            pixmap = pixmap.scaled(self.ui.label_image.parentWidget().width(), self.ui.label_image.parentWidget().height(), aspectRatioMode=QtCore.Qt.AspectRatioMode.KeepAspectRatio)
+            pixmap = pixmap.scaledToHeight(self.ui.label_image.parentWidget().height() * 0.75)
             self.ui.label_image.setPixmap(pixmap)
             
-        self.ui.label_name.setText(self.model.movie['Title'])
-        self.ui.label_release_year.setText(str(int(self.model.movie['Release'])))
-        self.ui.label_description.setText(str(self.model.movie['Description']))
+        info_content = self.model.movie['Title']
+        
+        if not pd.isnull(self.model.movie['Release']):
+            info_content = info_content + "\nRelease: " + str(int(self.model.movie['Release']))
+        
+        if not pd.isnull(self.model.movie['AvgRating']):
+            info_content = info_content + "\nRating:" + str(float(self.model.movie['AvgRating']))
 
+        info_content = info_content + "\nGenres: " + ', '.join(self.model.movie["Genres"])
+
+
+        self.ui.label_info.setText(info_content)
         self.ui.tableView_cast.setModel(PandasModel(self.model.actors[['Name']]))
+        self.ui.progressBar_scraping.setVisible(False)
+        self.setEnabled(True)
 
     @pyqtSlot(QModelIndex)
     def table_cast_double_click(self, index):

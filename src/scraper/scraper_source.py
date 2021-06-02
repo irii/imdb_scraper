@@ -5,6 +5,9 @@ from .scrape_container import ScrapeContainer
 class ScraperParser:
     name: str
 
+    def getLink(self, id) -> str:
+        pass
+
     def isSupported(self, link) -> str: # If supported a id is returned
         return None
 

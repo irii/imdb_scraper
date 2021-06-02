@@ -13,6 +13,12 @@ _CAST_ID_IDENTIFIER_LEN = len(_CAST_ID_IDENTIFIER)
 class ImdbMovieParser(ScraperParser):
     name = "IMDB_MOVIE"
 
+    def getLink(self, id) -> str:        
+        if id.startswith(_CAST_ID_IDENTIFIER):
+            return "https://www.imdb.com/title/" + id[_CAST_ID_IDENTIFIER_LEN:] + "/fullcredits"
+
+        return "https://www.imdb.com/title/" + id
+
     def isSupported(self, link) -> str:
         match = Utils.MOVIE_CAST_ID_PARSER.match(link)
         if match:
@@ -52,14 +58,23 @@ class ImdbMovieParser(ScraperParser):
         if rating_el:
             rating = float(rating_el.text.strip())
 
+
+        genres = []
+        genres_container = soup.find('li', {'data-testid': 'storyline-genres'})
+        if genres_container:
+            genres = [x.text.strip() for x in genres_container.find_all('li', {'role': 'presentation'})]
+
         container.movies.append({
             'ID': id,
             'Title': title,
             'AvgRating': rating,
-            'Release': year
+            'Release': year,
+            'Genres': genres,
+            'SourceUrl': link,
+            'Completed': True
         })
 
-        container.queue.enqueue('https://www.imdb.com/title/' + id + '/fullcredits', priority + 1)
+        container.queue.enqueue('https://www.imdb.com/title/' + id + '/fullcredits', priority)
 
 
     def _parse_movie_credits(self, container: ScrapeContainer, link: str, priority: int, id: str, soup: BeautifulSoup):
@@ -67,6 +82,21 @@ class ImdbMovieParser(ScraperParser):
 
         actor_urls = soup.find_all('a', {'href': Utils.ACTOR_ID_PARSER})
         for x in actor_urls:
-            actorIds.append(Utils.ACTOR_ID_PARSER.match(x['href']).group('Id'))
+            actorId = Utils.ACTOR_ID_PARSER.match(x['href']).group('Id')
+
+            container.actorsMovies.append({
+                'ActorID': actorId,
+                'MovieID': id,
+                'SourceUrl': link
+            })
+
+            container.actors.append({
+                'ID': id,
+                'Name': x.text.strip(),
+                'Completed': False,
+                'SourceUrl': 'https://www.imdb.com/' + x['href']
+            })
+
+            container.queue.enqueue('https://www.imdb.com/' + x['href'], priority + 1)            
 
         return actorIds

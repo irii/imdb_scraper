@@ -6,13 +6,16 @@ class ScraperQueue:
     _level_queue_dict: dict = {}
 
     _count: int = 0
-    _total_count: int = 0
+    _total_count_dict: dict = {}
 
     def getMaxLevelQueue(self):
         return self._max_priority
 
-    def getTotalCount(self) -> int:
-        return self._total_count
+    def getTotalCount(self, level=None) -> int:
+        if level == None:
+            return sum(self._total_count_dict.values())
+
+        return self._total_count_dict[level - 1]
 
     def getLength(self) -> int:
         return self._count
@@ -29,8 +32,10 @@ class ScraperQueue:
         if self._max_priority < priority:
             for i in range(self._max_priority, priority):
                 self._level_queue_dict[i] = []
+                self._total_count_dict[i] = 0
+
             self._max_priority = priority
 
         self._level_queue_dict[priority - 1].append(link)
         self._count = self._count + 1
-        self._total_count = self._total_count + 1
+        self._total_count_dict[priority - 1] = self._total_count_dict[priority - 1] + 1

@@ -114,7 +114,7 @@ class Scraper:
                 break
 
             if listener:
-                listener.processing(TYPE_PROGRESS_SCRAPING, url, scrapedCount, container.queue.getTotalCount())
+                listener.processing(TYPE_PROGRESS_SCRAPING, url, scrapedCount, container.queue.getTotalCount(maxScrapeLevel))
 
             scrapedCount = scrapedCount + 1
 
@@ -150,24 +150,24 @@ class Scraper:
         df = self.dataContainer.actors
         partialActorData = df[(df["ID"] == actorId)]
 
-        if len(partialActorData) != 1:
-            return
-
-        if partialActorData["Completed"][0] == True:
+        if len(partialActorData) > 0 and partialActorData.loc[partialActorData.index[0], 'Completed'] == True:
             listener.finished()
             return
 
-        self._synchronize([partialActorData["SourceUrl"][0]], [ImdbActorParser(), ImdbFilmoSearchParser()], listener)
+        actorParser = ImdbActorParser()
+        link = actorParser.getBioLink(actorId)
+
+        self._synchronize([link], [actorParser, ImdbFilmoSearchParser()], listener)
 
     def fetchMovie(self, movieId, listener: ScraperEventListener):
         df = self.dataContainer.movies
         partialMovieData = df[(df["ID"] == movieId)]
 
-        if len(partialMovieData) != 1:
-            return
-
-        if partialMovieData["Completed"][0] == True:
+        if len(partialMovieData) > 0 and partialMovieData.loc[partialMovieData.index[0], 'Completed'] == True:
             listener.finished()
             return
 
-        self._synchronize([partialMovieData["SourceUrl"][0]], [ImdbMovieParser()], listener)
+        parser = ImdbMovieParser()
+        link = parser.getLink(movieId)
+
+        self._synchronize([link], [parser], listener)

@@ -1,3 +1,4 @@
+from data.data_container import DataContainer
 from .scraper_queue import ScraperQueue
 
 class ScrapeContainer:
@@ -9,6 +10,8 @@ class ScrapeContainer:
     lists = []
     actorsMovies = []
     images = {}
+
+    dataContainer: DataContainer
 
     queue: ScraperQueue = ScraperQueue()
 

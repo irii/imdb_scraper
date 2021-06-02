@@ -35,5 +35,9 @@ class WindowManager:
             self._view_sessions[id].close()
 
     def destroy_all(self):
-        for id in self._view_sessions.keys():
-            self._view_sessions[id].close()
+        keys_copy = [] + list(self._view_sessions.keys()) # Avoid threading issues
+
+        for id in keys_copy:
+            view = self._view_sessions.get(id, None)
+            if view:
+                view.close()

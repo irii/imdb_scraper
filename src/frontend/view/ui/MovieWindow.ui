@@ -11,17 +11,17 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Movie - </string>
+   <string>Movie - Loading</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout_2">
+  <layout class="QVBoxLayout" name="verticalLayout_3">
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout" stretch="2,5">
      <item>
-      <layout class="QVBoxLayout" name="verticalLayout_5" stretch="5,1,1,1">
+      <layout class="QVBoxLayout" name="verticalLayout_5" stretch="5,3">
        <item>
         <widget class="QLabel" name="label_image">
          <property name="text">
-          <string>Image</string>
+          <string/>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -29,23 +29,15 @@
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="label_name">
-         <property name="text">
-          <string>TextLabel</string>
+        <widget class="QLabel" name="label_info">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
          </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_release_year">
          <property name="text">
-          <string>TextLabel</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_rating">
-         <property name="text">
-          <string>TextLabel</string>
+          <string/>
          </property>
         </widget>
        </item>
@@ -56,24 +48,6 @@
        <property name="currentIndex">
         <number>0</number>
        </property>
-       <widget class="QWidget" name="tab">
-        <attribute name="title">
-         <string>Description</string>
-        </attribute>
-        <layout class="QVBoxLayout" name="verticalLayout_7">
-         <item>
-          <layout class="QVBoxLayout" name="verticalLayout_6">
-           <item>
-            <widget class="QLabel" name="label_description">
-             <property name="text">
-              <string>Empty</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-        </layout>
-       </widget>
        <widget class="QWidget" name="tab_cast">
         <attribute name="title">
          <string>Cast</string>
@@ -91,6 +65,13 @@
       </widget>
      </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QProgressBar" name="progressBar_scraping">
+     <property name="value">
+      <number>0</number>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

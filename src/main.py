@@ -48,7 +48,7 @@ def actorViewFactory(windowManager, dataContainer, scraper, *args):
 
 def movieViewFactory(windowManager, dataContainer, scraper, *args):
     model = MovieModel()
-    ctrl = MovieController(model, dataContainer, windowManager)
+    ctrl = MovieController(model, dataContainer, windowManager, scraper)
     view = MovieWindow(model, ctrl)
 
     ctrl.set_movie(args[0])
@@ -74,10 +74,10 @@ def main():
     windowManager = WindowManager(dataContainer, scraper)
     configureWindowManager(windowManager)
 
-    dataContainer.load("./test")
-    s = Scraper(dataContainer)
-    s.synchronize(['https://www.imdb.com/list/ls053501318/'])
-    dataContainer.save()
+    #dataContainer.load("./test")
+    #s = Scraper(dataContainer)
+    #s.synchronize(['https://www.imdb.com/list/ls053501318/'])
+    #dataContainer.save()
 
 
     mainModel = MainModel()

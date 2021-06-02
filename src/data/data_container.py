@@ -1,10 +1,11 @@
 import os
 import pandas as pd
+from ast import literal_eval
 
-COLUMNS_ACTORS = ['ID', 'Name', 'DateOfBirth', 'BornIn', 'ImageUrl', 'SourceUrl', 'Completed'] # Supports partial data
+COLUMNS_ACTORS = ['ID', 'Name', 'DateOfBirth', 'BornIn', 'ImageUrl', 'Biography', 'SourceUrl', 'Completed'] # Supports partial data
 COLUMNS_ACTORS_KEYS = ['ID']
 
-COLUMNS_MOVIES = ['ID', 'Title', 'Description', 'Release', 'AvgRating', 'Genre', 'ImageUrl', 'SourceUrl', 'Completed'] # Supports partial data
+COLUMNS_MOVIES = ['ID', 'Title', 'Release', 'AvgRating', 'Genres', 'ImageUrl', 'SourceUrl', 'Completed'] # Supports partial data
 COLUMNS_MOVIES_KEYS = ['ID']
 
 COLUMNS_LISTS = ['ID', 'SortId', 'Title', 'Type', 'ItemId', 'SourceUrl']
@@ -15,9 +16,6 @@ COLUMNS_AWARDS_KEYS = ['ActorID', 'Name', 'Year', 'MovieId']
 
 COLUMNS_ACTORS_MOVIES = ['MovieID', 'ActorID', 'SourceUrl']
 COLUMNS_ACTORS_MOVIES_KEYS = ['MovieID', 'ActorID']
-
-COLUMNS_ACTORS_MOVIES_SORTING = ['MovieID', 'ActorID', 'Type', 'Value', 'SourceUrl']
-COLUMNS_ACTORS_MOVIES_SORTING_KEYS = ['MovieID', 'ActorID', 'Type', 'Value']
 
 class DataContainer:  
     _database_folder: str
@@ -32,11 +30,11 @@ class DataContainer:
     database_loaded: bool = False
 
     def _initEmpty(self):
-        self.actors = pd.DataFrame ([], columns = COLUMNS_ACTORS)
-        self.movies = pd.DataFrame ([], columns = COLUMNS_MOVIES)
-        self.lists = pd.DataFrame ([], columns = COLUMNS_LISTS)
-        self.awards = pd.DataFrame ([], columns = COLUMNS_AWARDS)
-        self.actors_movies = pd.DataFrame([], columns = COLUMNS_ACTORS_MOVIES_SORTING)
+        self.actors = pd.DataFrame ([], columns = COLUMNS_ACTORS)#.set_index(COLUMNS_ACTORS_KEYS)
+        self.movies = pd.DataFrame ([], columns = COLUMNS_MOVIES)#.set_index(COLUMNS_MOVIES_KEYS)
+        self.lists = pd.DataFrame ([], columns = COLUMNS_LISTS)#.set_index(COLUMNS_LISTS_KEYS)
+        self.awards = pd.DataFrame ([], columns = COLUMNS_AWARDS)#.set_index(COLUMNS_AWARDS_KEYS)
+        self.actors_movies = pd.DataFrame([], columns = COLUMNS_ACTORS_MOVIES)#.set_index(COLUMNS_ACTORS_MOVIES_KEYS)
 
     def save(self):
         actors = os.path.join(self._database_folder, 'actors.csv')
@@ -107,38 +105,72 @@ class DataContainer:
             os.mkdir(self._image_folder)
 
         if os.path.isfile(actors):
-            self.actors = pd.read_csv(actors)
+            self.actors = pd.read_csv(actors)#.set_index(COLUMNS_ACTORS_KEYS)
             
         if os.path.isfile(movies):
-            self.movies = pd.read_csv(movies)
+            self.movies = pd.read_csv(movies)#.set_index(COLUMNS_MOVIES_KEYS)
+            self.movies['Genres'] = self.movies['Genres'].apply(literal_eval)
             
         if os.path.isfile(lists):
-            self.lists = pd.read_csv(lists)
+            self.lists = pd.read_csv(lists)#.set_index(COLUMNS_LISTS_KEYS)
             
         if os.path.isfile(awards):
-            self.awards = pd.read_csv(awards)
+            self.awards = pd.read_csv(awards)#.set_index(COLUMNS_AWARDS_KEYS)
 
         if os.path.isfile(actors_movies):
-            self.actors_movies = pd.read_csv(actors_movies)
+            self.actors_movies = pd.read_csv(actors_movies)#.set_index(COLUMNS_ACTORS_MOVIES_SORTING_KEYS)
 
         self.database_loaded = True
 
 
+    def insertOrUpdateActor(self, actorDict):
+        id = actorDict["ID"]
+        exists = self.actors[(self.actors["ID"] == id)]
+
+        if len(exists) > 0 and exists.loc[exists.index[0], 'Completed'] == True and actorDict["Completed"] == False:
+            return # Don't overwrite complete actor with incomplete data
+
+        df1 = self.actors
+        df2 = pd.DataFrame([actorDict], columns=COLUMNS_ACTORS)
+
+        self.actors = pd.concat([df1,df2]).drop_duplicates(['ID'],keep='last').sort_values('ID')
+
+    def insertOrUpdateMovie(self, movieDict):
+        id = movieDict["ID"]
+        exists = self.movies[(self.movies["ID"] == id)]
+
+        if len(exists) > 0 and exists.loc[exists.index[0], 'Completed'] == True and movieDict["Completed"] == False:
+            return # Don't overwrite complete actor with incomplete data
+
+        df1 = self.movies
+        df2 = pd.DataFrame([movieDict], columns=COLUMNS_ACTORS)
+
+        self.movies = pd.concat([df1,df2]).drop_duplicates(['ID'],keep='last').sort_values('ID')
+
     def migrateActorsMovies(self, actorsMovies, delete_orphanded_items):
-        df2 = pd.DataFrame(actorsMovies, columns=COLUMNS_ACTORS_MOVIES_SORTING)
+        df2 = pd.DataFrame(actorsMovies, columns=COLUMNS_ACTORS_MOVIES)
 
         if delete_orphanded_items == True:
             self.actors_movies = df2
         else:
-            self.actors_movies = self.actors_movies.set_index(COLUMNS_ACTORS_MOVIES_SORTING_KEYS).combine_first(df2.set_index(COLUMNS_ACTORS_MOVIES_SORTING_KEYS))
+            self.actors_movies = pd.concat([self.actors_movies, df2]).drop_duplicates(ignore_index=True)
 
     def migrateActors(self, actors, delete_orphanded_items):
         df2 = pd.DataFrame(actors, columns=COLUMNS_ACTORS)
+        df2 = df2.drop_duplicates(ignore_index=True)
 
         if delete_orphanded_items == True:
             self.actors = df2
         else:
-            self.actors = self.actors.set_index(COLUMNS_ACTORS_KEYS).combine_first(df2.set_index(COLUMNS_ACTORS_KEYS))
+            incompleted_actors = df2[(df2["Completed"] == False)]
+
+            completed_actors = df2[(df2["Completed"] == True)]
+            updated_actors = self.actors.update(completed_actors)
+
+            self.actors = incompleted_actors.update(updated_actors)
+
+    def _migrateActor(self, left, right):
+        return left
 
     def migrateMovies(self, movies, delete_orphanded_items):
         df2 = pd.DataFrame(movies, columns=COLUMNS_MOVIES)
@@ -146,20 +178,22 @@ class DataContainer:
         if delete_orphanded_items == True:
             self.movies = df2
         else:
-            self.movies = self.movies.set_index(COLUMNS_MOVIES_KEYS).combine_first(df2.set_index(COLUMNS_MOVIES_KEYS))
+            self.movies = self.movies.set_index(COLUMNS_MOVIES_KEYS).combine_first(df2.set_index(COLUMNS_MOVIES_KEYS)).reset_index()
 
     def migrateAwards(self, awards, delete_orphanded_items):
         df2 = pd.DataFrame(awards, columns=COLUMNS_AWARDS)
+        df2 = df2.drop_duplicates(ignore_index=True)
 
         if delete_orphanded_items == True:
             self.awards = df2
         else:
-            self.awards = self.awards.set_index(COLUMNS_AWARDS_KEYS).combine_first(df2.set_index(COLUMNS_AWARDS_KEYS))
+            self.awards = self.awards.set_index(COLUMNS_AWARDS_KEYS).combine_first(df2.set_index(COLUMNS_AWARDS_KEYS)).reset_index()
 
     def migrateLists(self, lists, delete_orphanded_items):
         df2 = pd.DataFrame(lists, columns=COLUMNS_LISTS)
+        df2 = df2.drop_duplicates(ignore_index=True)
 
         if delete_orphanded_items == True:
             self.lists = df2
         else:
-            self.lists = self.lists.set_index(COLUMNS_LISTS_KEYS).combine_first(df2.set_index(COLUMNS_LISTS_KEYS))
+            self.lists = self.lists.set_index(COLUMNS_LISTS_KEYS).combine_first(df2.set_index(COLUMNS_LISTS_KEYS)).reset_index()

@@ -24,7 +24,9 @@ class MainController(QObject):
     def loadDatabase(self, folder):
         self._current_database_folder = folder
         self._dataContainer.load(folder)
+        self._loadData()
 
+    def _loadData(self):
         moviesReduced = self._dataContainer.movies[['ID', 'Title']]
         moviesReduced['Type'] = 'Movie'
 
@@ -39,15 +41,16 @@ class MainController(QObject):
         enriched_list = enriched_list.merge(actorsReduced, how='left', left_on=['Type', 'ItemId'], right_on=['Type', 'ID_Actor'])
         enriched_list['Name'] = None
 
-        if enriched_list['Name'].count() > 0:
+        if enriched_list['ID'].count() > 0:
             enriched_list['Name'] = enriched_list.apply(lambda row: row['Name_Movie'] if pd.isnull(row['Name_Actor']) else row['Name_Actor'], axis=1)
 
         enriched_list = enriched_list[['ID', 'SortId', 'Title', 'Type', 'ItemId', 'Name']]
 
         self.model.setData(self._dataContainer.actors, self._dataContainer.movies, enriched_list)
 
-    def saveDatabase(self, folder=None):
-        self._dataContainer.save(folder or self._current_database_folder)
+
+    def saveDatabase(self):
+        self._dataContainer.save()
 
 
     def change_selected_item(self, content_type, identifier):
@@ -61,7 +64,7 @@ class MainController(QObject):
         return True
 
     def scrape_finished(self):
-        self.model.setData(self._dataContainer.actors, self._dataContainer.movies, self._dataContainer.lists)
+        self._loadData()
 
     def display_about(self):
         self._windowManager.get_or_create_view('ABOUT').show()
