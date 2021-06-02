@@ -40,7 +40,7 @@ class ImdbFilmoSearchParser(ScraperParser):
             for link in links:
                 titleId = Utils.MOVIE_ID_PARSER.match(link["href"]).group('Id')
 
-                container.actorsMovies.append({
+                container.dataContainer.insertActorMovie({
                     'ActorID': actorId,
                     'MovieID': titleId
                 })
@@ -66,7 +66,7 @@ class ImdbFilmoSearchParser(ScraperParser):
                     rating = float(rating_el["data-value"])
 
                 if title_name_a:
-                    container.movies.append({
+                    container.dataContainer.insertOrUpdateMovie({
                         'ID': titleId,
                         'Title': title_name_a.text.strip(),
                         'Completed': False,

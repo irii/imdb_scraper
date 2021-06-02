@@ -4,15 +4,10 @@ from .scraper_queue import ScraperQueue
 class ScrapeContainer:
     _scraped_ids = []
 
-    actors = []
-    awards = []
-    movies = []
-    lists = []
-    actorsMovies = []
+    def __init__(self, dataContainer: DataContainer):
+        self.dataContainer = dataContainer
+
     images = {}
-
-    dataContainer: DataContainer
-
     queue: ScraperQueue = ScraperQueue()
 
     def markIdAsSet(self, data_type, id):

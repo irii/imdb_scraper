@@ -37,7 +37,7 @@ class ActorWindow(BaseChildWindow):
 
         if self.model.imagePath:
             pixmap = QPixmap(self.model.imagePath)
-            pixmap = pixmap.scaledToHeight(self.ui.label_image.parentWidget().height() * 0.75)
+            pixmap = pixmap.scaledToWidth(self.ui.label_image.parentWidget().width() * 0.25)
             self.ui.label_image.setPixmap(pixmap)
             
 

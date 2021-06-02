@@ -72,9 +72,9 @@ class ImdbActorParser(ScraperParser):
                 bornIn = bornInEl.text.strip()
 
         if(imageUrlEl):
-            link = Utils.prepareImageLink(imageUrlEl['src'])
-            if link:
-                container.images['actor_' + id + "." + link[1]] = link[0]
+            image_link = Utils.prepareImageLink(imageUrlEl['src'])
+            if image_link:
+                container.images['actor_' + id + "." + image_link[1]] = image_link[0]
 
 
         biography = ''
@@ -84,7 +84,7 @@ class ImdbActorParser(ScraperParser):
             if bio_content:
                 biography = bio_content.text.strip()
 
-        container.actors.append({
+        container.dataContainer.insertOrUpdateActor({
             'ID': id,
             'Name': name,
             'DateOfBirth': dateOfBirth,
@@ -93,7 +93,6 @@ class ImdbActorParser(ScraperParser):
             'SourceUrl': link,
             'Completed': True
         })
-
 
         container.queue.enqueue('https://www.imdb.com/name/' + id + '/awards', priority)
         container.queue.enqueue('https://www.imdb.com/filmosearch/?explore=title_type&role=' + id + '&ref_=filmo_ref_typ&sort=user_rating,desc&mode=detail&page=1&title_type=movie%2CtvMovie', priority)
@@ -138,7 +137,7 @@ class ImdbActorParser(ScraperParser):
 
                     award_description = a.find('td', class_="award_description").next_element.strip()
 
-                    container.awards.append({
+                    container.dataContainer.insertOrUpdateActorAward({
                         'ActorID': id,
                         'Name': award_name,
                         'Year': year,

@@ -60,7 +60,7 @@ def configureWindowManager(windowManager: WindowManager):
     windowManager.register_view('ABOUT', lambda *a: 'ABOUT', lambda *a: AboutWindow(AboutController()))
     windowManager.register_view('ACTOR', lambda *a: 'ACTOR-' + a[0], actorViewFactory)
     windowManager.register_view('MOVIE', lambda *a: 'MOVIE-' + str(id(a[0])), movieViewFactory)
-    windowManager.register_view('SCRAPE', lambda *a: 'SCRAPE-' + str(id(a[0])), scrapeViewFactory)
+    windowManager.register_view('SCRAPE', lambda *a: 'SCRAPE', scrapeViewFactory)
 
 def main():
     app = QApplication(sys.argv)

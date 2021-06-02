@@ -6,17 +6,17 @@ from scraper.scraper import Scraper, LambdaScraperEventListener
 
 class ScrapeBackgroundTask(QtCore.QThread):
     finished = QtCore.pyqtSignal()
-    progress = QtCore.pyqtSignal(str, int, int)
+    progress = QtCore.pyqtSignal(str, str, int, int)
 
-    def __init__(self, scraper: Scraper, startUrls, delete_orphanded_items: bool):
+    def __init__(self, scraper: Scraper, startUrls, depth):
         super().__init__()
 
         self.scraper = scraper
         self.startUrls = startUrls
-        self.delete_orphanded_items = delete_orphanded_items
+        self.depth = depth
 
     def run(self):
-        self.scraper.synchronize(self.startUrls, delete_orphanded_items=self.delete_orphanded_items, listener=LambdaScraperEventListener(processing=lambda type, url, count, totalCount: self.progress.emit(url, count, totalCount)))
+        self.scraper.synchronize(self.startUrls, maxScrapeLevel=self.depth, listener=LambdaScraperEventListener(processing=lambda type, url, count, totalCount: self.progress.emit(type, url, count, totalCount)))
         self.finished.emit()
 
 
@@ -29,7 +29,7 @@ class ScrapeController:
         self.scrapeFinished = scrapeFinished
         
 
-    def startScraping(self, delete_orphanded_items: bool, scrapeLinks=[]) -> bool():
+    def startScraping(self, depth, scrapeLinks=[]) -> bool():
         if(len(scrapeLinks) == 0):
             return False
 
@@ -38,19 +38,18 @@ class ScrapeController:
 
         scraper = Scraper(self.dataContainer)
 
-        self._background_task = ScrapeBackgroundTask(scraper, scrapeLinks, delete_orphanded_items)
+        self._background_task = ScrapeBackgroundTask(scraper, scrapeLinks, depth)
         self._background_task.finished.connect(self._finish_callback)
-        self._background_task.progress.connect(lambda url, current, total: self.model.progress_changed.emit(current, total))
+        self._background_task.progress.connect(lambda type, url, current, total: self.model.progress_changed.emit(type, url, current, total))
 
         self._background_task.start()
 
         self.model.started.emit()
-
-        if self.scrapeFinished:
-            self._background_task.finished.connect(lambda: self.scrapeFinished())
 
         return True
 
     def _finish_callback(self):
         self._background_task = None
         self.model.finished.emit()
+        if self.scrapeFinished:
+            self.scrapeFinished()

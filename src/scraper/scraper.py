@@ -60,16 +60,24 @@ class LambdaScraperEventListener(ScraperEventListener):
         if self._error:
             self._error(type, item, message)
 
+_PARSER_IMDB_ACTOR = IMDB.ImdbActorParser()
+_PARSER_IMDB_MOVIE = IMDB.ImdbMovieParser()
+_PARSER_IMDB_LIST = IMDB.ImdbListParser()
+_PARSER_IMDB_FILMOSEARCH = IMDB.ImdbFilmoSearchParser()
+
 class Scraper:
-    parsers: List[ScraperParser] = [IMDB.ImdbActorParser(), IMDB.ImdbMovieParser(), IMDB.ImdbListParser(), IMDB.ImdbFilmoSearchParser()]
+    parsers: List[ScraperParser] = [_PARSER_IMDB_ACTOR, _PARSER_IMDB_MOVIE, _PARSER_IMDB_LIST, _PARSER_IMDB_FILMOSEARCH]
 
     def __init__(self, dataContainer: DataContainer):
         self.dataContainer = dataContainer
 
-    def _downloadImages(self, images, delete_orphanded_items, listener:ScraperEventListener=None):
+    def _downloadImages(self, images, listener:ScraperEventListener=None):
         counter = 0      
         for k in images.keys():
             counter = counter + 1
+
+            if self.dataContainer.imageExists(k):
+                continue
 
             if listener:
                 listener.processing(TYPE_PROGRESS_DOWNLOADING_IMAGES, images[k], counter, len(images.keys()))
@@ -95,12 +103,10 @@ class Scraper:
                 page = requests.get(link, headers=_HEADERS)
                 soup = BeautifulSoup(page.text, 'html.parser')
 
-                return x.parse(container, link, priority, id, soup) or []
-
-        return []
+                return x.parse(container, link, priority, id, soup)
 
     def _process(self, startLinks, parsers, listener: ScraperEventListener=None, maxScrapeLevel: int = 1) -> ScrapeContainer:
-        container = ScrapeContainer()
+        container = ScrapeContainer(self.dataContainer)
 
         for sl in startLinks:
             container.queue.enqueue(sl, 1)
@@ -126,25 +132,19 @@ class Scraper:
 
         return container
         
-    def _synchronize(self, urls, parsers, listener: ScraperEventListener=None, delete_orphanded_items=False, maxScrapeLevel: int = 1):
+    def _synchronize(self, urls, parsers, listener: ScraperEventListener=None, maxScrapeLevel: int = 1):
         result = self._process(urls, parsers, listener, maxScrapeLevel)
 
-        self.dataContainer.migrateMovies(result.movies, delete_orphanded_items)
-        self.dataContainer.migrateActors(result.actors, delete_orphanded_items)
-        self.dataContainer.migrateLists(result.lists, delete_orphanded_items)
-        self.dataContainer.migrateAwards(result.awards, delete_orphanded_items)
-        self.dataContainer.migrateActorsMovies(result.actorsMovies, delete_orphanded_items)
-
-        self._downloadImages(result.images, delete_orphanded_items, listener)
+        self._downloadImages(result.images, listener)
 
         if listener:
             listener.finished()
 
-    def synchronize(self, urls, listener: ScraperEventListener=None, delete_orphanded_items=False, maxScrapeLevel: int = 1):
-        return self._synchronize(urls, self.parsers, listener, delete_orphanded_items, maxScrapeLevel)
+    def synchronize(self, urls, listener: ScraperEventListener=None, maxScrapeLevel: int = 1):
+        return self._synchronize(urls, self.parsers, listener, maxScrapeLevel)
 
 
-    # This method gets called, if an actor is requested which was not fully scraped in the previous process.
+    # This method gets called, if an actor is requested. If it was not fully scraped in the previous process, then this will be also done her.
     # This will start a small scrape process and merge it into the current database
     def fetchActor(self, actorId, listener: ScraperEventListener):
         df = self.dataContainer.actors
@@ -154,11 +154,13 @@ class Scraper:
             listener.finished()
             return
 
-        actorParser = ImdbActorParser()
-        link = actorParser.getBioLink(actorId)
+        link = _PARSER_IMDB_ACTOR.getBioLink(actorId)
 
-        self._synchronize([link], [actorParser, ImdbFilmoSearchParser()], listener)
+        self._synchronize([link], [_PARSER_IMDB_ACTOR, ImdbFilmoSearchParser()], listener)
 
+
+    # This method gets called, if an movie is requested. If it was not fully scraped in the previous process, then this will be also done her.
+    # This will start a small scrape process and merge it into the current database
     def fetchMovie(self, movieId, listener: ScraperEventListener):
         df = self.dataContainer.movies
         partialMovieData = df[(df["ID"] == movieId)]
@@ -167,7 +169,6 @@ class Scraper:
             listener.finished()
             return
 
-        parser = ImdbMovieParser()
-        link = parser.getLink(movieId)
+        link = _PARSER_IMDB_MOVIE.getLink(movieId)
 
-        self._synchronize([link], [parser], listener)
+        self._synchronize([link], [_PARSER_IMDB_MOVIE], listener)

@@ -15,7 +15,13 @@ class ScraperQueue:
         if level == None:
             return sum(self._total_count_dict.values())
 
-        return self._total_count_dict[level - 1]
+
+        total_sum = 0
+        for r in range(0, level):
+            if r in self._total_count_dict.keys():
+                total_sum = total_sum + self._total_count_dict[r]
+
+        return total_sum
 
     def getLength(self) -> int:
         return self._count

@@ -24,6 +24,8 @@ class ImdbListParser(ScraperParser):
 
         sortId = 1
 
+        items = []
+
         for entry in lister_list:
             h3 = entry.find('h3', attrs={'class': 'lister-item-header'})
             a = h3.find('a')
@@ -34,7 +36,7 @@ class ImdbListParser(ScraperParser):
                 container.queue.enqueue('https://www.imdb.com/name/' + match.group('Id') + '/bio', priority + 1) # Queue entry
 
                 # Add scrape result
-                container.lists.append({
+                items.append({
                     'ID': id,
                     'Title': title,
                     'SortId': sortId,
@@ -43,7 +45,7 @@ class ImdbListParser(ScraperParser):
                     'SourceUrl': link
                 })
 
-                container.actors.append({
+                container.dataContainer.insertOrUpdateActor({
                     'ID': match.group('Id'),
                     'Name': a.text.strip(),
                     'Completed': False,
@@ -55,7 +57,7 @@ class ImdbListParser(ScraperParser):
                 container.queue.enqueue('https://www.imdb.com/title/' + match.group('Id'), priority + 1) # Queue entry
 
                 # Add scrape result
-                container.lists.append({
+                items.append({
                     'ID': id,
                     'Title': title,
                     'SortId': sortId,
@@ -64,7 +66,7 @@ class ImdbListParser(ScraperParser):
                     'SourceUrl': link,
                 })
 
-                container.movies.append({
+                container.dataContainer.insertOrUpdateMovie({
                     'ID': match.group('Id'),
                     'Title': a.text.strip(),
                     'Completed': False,
@@ -73,3 +75,4 @@ class ImdbListParser(ScraperParser):
                 })
 
             sortId = sortId + 1
+        container.dataContainer.insertOrUpdateList(id, items)

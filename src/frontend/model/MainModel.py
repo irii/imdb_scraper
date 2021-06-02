@@ -53,9 +53,9 @@ class MainModel(QObject):
         self._content_type = content_type
 
         if(content_type == CONTENT_TYPE_ACTOR):
-            self._content = self._actors
+            self._content = self._actors[['ID', 'Name']]
         elif(content_type == CONTENT_TYPE_MOVIE):
-            self._content = self._movies
+            self._content = self._movies[['ID', 'Title']]
         elif(content_type == CONTENT_TYPE_LIST):
             self._content = self._lists[(self._lists.ID == identifier)][['Name', 'Type', 'ItemId', 'SortId']]
         else:

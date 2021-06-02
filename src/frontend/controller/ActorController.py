@@ -40,7 +40,7 @@ class ActorController:
         self._background_task.progress.connect(lambda progress: self.model.data_processing.emit(progress))
         self._background_task.finished.connect(lambda: self._apply_data(id))
         
-        self._background_task.run()
+        self._background_task.start()
         return True
 
 

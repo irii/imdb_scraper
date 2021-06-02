@@ -1,11 +1,12 @@
 import os
 import pandas as pd
+import threading
 from ast import literal_eval
 
-COLUMNS_ACTORS = ['ID', 'Name', 'DateOfBirth', 'BornIn', 'ImageUrl', 'Biography', 'SourceUrl', 'Completed'] # Supports partial data
+COLUMNS_ACTORS = ['ID', 'Name', 'DateOfBirth', 'BornIn', 'Biography', 'SourceUrl', 'Completed'] # Supports partial data
 COLUMNS_ACTORS_KEYS = ['ID']
 
-COLUMNS_MOVIES = ['ID', 'Title', 'Release', 'AvgRating', 'Genres', 'ImageUrl', 'SourceUrl', 'Completed'] # Supports partial data
+COLUMNS_MOVIES = ['ID', 'Title', 'Release', 'AvgRating', 'Genres', 'SourceUrl', 'Completed'] # Supports partial data
 COLUMNS_MOVIES_KEYS = ['ID']
 
 COLUMNS_LISTS = ['ID', 'SortId', 'Title', 'Type', 'ItemId', 'SourceUrl']
@@ -17,7 +18,9 @@ COLUMNS_AWARDS_KEYS = ['ActorID', 'Name', 'Year', 'MovieId']
 COLUMNS_ACTORS_MOVIES = ['MovieID', 'ActorID', 'SourceUrl']
 COLUMNS_ACTORS_MOVIES_KEYS = ['MovieID', 'ActorID']
 
-class DataContainer:  
+class DataContainer:
+    _lock = threading.Lock() # Allows usage of multi scraping processes
+
     _database_folder: str
     _image_folder: str
 
@@ -37,17 +40,18 @@ class DataContainer:
         self.actors_movies = pd.DataFrame([], columns = COLUMNS_ACTORS_MOVIES)#.set_index(COLUMNS_ACTORS_MOVIES_KEYS)
 
     def save(self):
-        actors = os.path.join(self._database_folder, 'actors.csv')
-        movies = os.path.join(self._database_folder, 'movies.csv')
-        lists = os.path.join(self._database_folder, 'lists.csv')
-        awards = os.path.join(self._database_folder, 'awards.csv')
-        actors_movies = os.path.join(self._database_folder, 'actors_movies.csv')
+        with self._lock:
+            actors = os.path.join(self._database_folder, 'actors.csv')
+            movies = os.path.join(self._database_folder, 'movies.csv')
+            lists = os.path.join(self._database_folder, 'lists.csv')
+            awards = os.path.join(self._database_folder, 'awards.csv')
+            actors_movies = os.path.join(self._database_folder, 'actors_movies.csv')
 
-        self.actors.to_csv(actors)
-        self.movies.to_csv(movies)
-        self.lists.to_csv(lists)
-        self.awards.to_csv(awards)
-        self.actors_movies.to_csv(actors_movies)
+            self.actors.to_csv(actors, index=False)
+            self.movies.to_csv(movies, index=False)
+            self.lists.to_csv(lists, index=False)
+            self.awards.to_csv(awards, index=False)
+            self.actors_movies.to_csv(actors_movies, index=False)
 
     def getImage(self, id):
         if self._image_folder == None:
@@ -91,109 +95,79 @@ class DataContainer:
 
 
     def load(self, folder):
-        self._initEmpty()
-        self._database_folder = folder
+        with self._lock:
+            self._initEmpty()
+            self._database_folder = folder
 
-        actors = os.path.join(folder, 'actors.csv')
-        movies = os.path.join(folder, 'movies.csv')
-        lists = os.path.join(folder, 'lists.csv')
-        awards = os.path.join(folder, 'awards.csv')
-        actors_movies = os.path.join(folder, 'actors_movies.csv')
-        self._image_folder = os.path.join(folder, 'images')
+            actors = os.path.join(folder, 'actors.csv')
+            movies = os.path.join(folder, 'movies.csv')
+            lists = os.path.join(folder, 'lists.csv')
+            awards = os.path.join(folder, 'awards.csv')
+            actors_movies = os.path.join(folder, 'actors_movies.csv')
+            self._image_folder = os.path.join(folder, 'images')
 
-        if not os.path.isdir(self._image_folder):
-            os.mkdir(self._image_folder)
+            if not os.path.isdir(self._image_folder):
+                os.mkdir(self._image_folder)
 
-        if os.path.isfile(actors):
-            self.actors = pd.read_csv(actors)#.set_index(COLUMNS_ACTORS_KEYS)
-            
-        if os.path.isfile(movies):
-            self.movies = pd.read_csv(movies)#.set_index(COLUMNS_MOVIES_KEYS)
-            self.movies['Genres'] = self.movies['Genres'].apply(literal_eval)
-            
-        if os.path.isfile(lists):
-            self.lists = pd.read_csv(lists)#.set_index(COLUMNS_LISTS_KEYS)
-            
-        if os.path.isfile(awards):
-            self.awards = pd.read_csv(awards)#.set_index(COLUMNS_AWARDS_KEYS)
+            if os.path.isfile(actors):
+                self.actors = pd.read_csv(actors)#.set_index(COLUMNS_ACTORS_KEYS)
+                
+            if os.path.isfile(movies):
+                self.movies = pd.read_csv(movies)#.set_index(COLUMNS_MOVIES_KEYS)
+                self.movies['Genres'] = self.movies['Genres'].apply(literal_eval)
+                
+            if os.path.isfile(lists):
+                self.lists = pd.read_csv(lists)#.set_index(COLUMNS_LISTS_KEYS)
+                
+            if os.path.isfile(awards):
+                self.awards = pd.read_csv(awards)#.set_index(COLUMNS_AWARDS_KEYS)
 
-        if os.path.isfile(actors_movies):
-            self.actors_movies = pd.read_csv(actors_movies)#.set_index(COLUMNS_ACTORS_MOVIES_SORTING_KEYS)
+            if os.path.isfile(actors_movies):
+                self.actors_movies = pd.read_csv(actors_movies)#.set_index(COLUMNS_ACTORS_MOVIES_SORTING_KEYS)
 
-        self.database_loaded = True
+            self.database_loaded = True
 
 
     def insertOrUpdateActor(self, actorDict):
-        id = actorDict["ID"]
-        exists = self.actors[(self.actors["ID"] == id)]
+        with self._lock:
+            id = actorDict["ID"]
+            exists = self.actors[(self.actors["ID"] == id)]
 
-        if len(exists) > 0 and exists.loc[exists.index[0], 'Completed'] == True and actorDict["Completed"] == False:
-            return # Don't overwrite complete actor with incomplete data
+            if len(exists) > 0 and exists.loc[exists.index[0], 'Completed'] == True and actorDict["Completed"] == False:
+                return # Don't overwrite complete actor with incomplete data
 
-        df1 = self.actors
-        df2 = pd.DataFrame([actorDict], columns=COLUMNS_ACTORS)
+            df1 = self.actors
+            df2 = pd.DataFrame([actorDict], columns=COLUMNS_ACTORS)
 
-        self.actors = pd.concat([df1,df2]).drop_duplicates(['ID'],keep='last').sort_values('ID')
+            self.actors = pd.concat([df1,df2]).drop_duplicates(COLUMNS_ACTORS_KEYS, keep='last').sort_values('ID')
+
+    def insertOrUpdateActorAward(self, awardDict):
+        with self._lock:
+            df1 = self.awards
+            df2 = pd.DataFrame([awardDict], columns=COLUMNS_AWARDS_KEYS)
+            self.awards = pd.concat([df1,df2]).drop_duplicates(COLUMNS_AWARDS_KEYS, keep='last').sort_values(['Year', 'Name'])
 
     def insertOrUpdateMovie(self, movieDict):
-        id = movieDict["ID"]
-        exists = self.movies[(self.movies["ID"] == id)]
+        with self._lock:
+            id = movieDict["ID"]
+            exists = self.movies[(self.movies["ID"] == id)]
 
-        if len(exists) > 0 and exists.loc[exists.index[0], 'Completed'] == True and movieDict["Completed"] == False:
-            return # Don't overwrite complete actor with incomplete data
+            if len(exists) > 0 and exists.loc[exists.index[0], 'Completed'] == True and movieDict["Completed"] == False:
+                return # Don't overwrite complete actor with incomplete data
 
-        df1 = self.movies
-        df2 = pd.DataFrame([movieDict], columns=COLUMNS_ACTORS)
+            df1 = self.movies
+            df2 = pd.DataFrame([movieDict], columns=COLUMNS_MOVIES)
 
-        self.movies = pd.concat([df1,df2]).drop_duplicates(['ID'],keep='last').sort_values('ID')
+            self.movies = pd.concat([df1,df2]).drop_duplicates(COLUMNS_MOVIES_KEYS, keep='last').sort_values('ID')
 
-    def migrateActorsMovies(self, actorsMovies, delete_orphanded_items):
-        df2 = pd.DataFrame(actorsMovies, columns=COLUMNS_ACTORS_MOVIES)
+    def insertActorMovie(self, mapping):
+        with self._lock:
+            df1 = self.actors_movies
+            df2 = pd.DataFrame([mapping], columns=COLUMNS_ACTORS_MOVIES)
+            self.actors_movies = pd.concat([df1,df2]).drop_duplicates(COLUMNS_ACTORS_MOVIES_KEYS, keep='last')
 
-        if delete_orphanded_items == True:
-            self.actors_movies = df2
-        else:
-            self.actors_movies = pd.concat([self.actors_movies, df2]).drop_duplicates(ignore_index=True)
-
-    def migrateActors(self, actors, delete_orphanded_items):
-        df2 = pd.DataFrame(actors, columns=COLUMNS_ACTORS)
-        df2 = df2.drop_duplicates(ignore_index=True)
-
-        if delete_orphanded_items == True:
-            self.actors = df2
-        else:
-            incompleted_actors = df2[(df2["Completed"] == False)]
-
-            completed_actors = df2[(df2["Completed"] == True)]
-            updated_actors = self.actors.update(completed_actors)
-
-            self.actors = incompleted_actors.update(updated_actors)
-
-    def _migrateActor(self, left, right):
-        return left
-
-    def migrateMovies(self, movies, delete_orphanded_items):
-        df2 = pd.DataFrame(movies, columns=COLUMNS_MOVIES)
-
-        if delete_orphanded_items == True:
-            self.movies = df2
-        else:
-            self.movies = self.movies.set_index(COLUMNS_MOVIES_KEYS).combine_first(df2.set_index(COLUMNS_MOVIES_KEYS)).reset_index()
-
-    def migrateAwards(self, awards, delete_orphanded_items):
-        df2 = pd.DataFrame(awards, columns=COLUMNS_AWARDS)
-        df2 = df2.drop_duplicates(ignore_index=True)
-
-        if delete_orphanded_items == True:
-            self.awards = df2
-        else:
-            self.awards = self.awards.set_index(COLUMNS_AWARDS_KEYS).combine_first(df2.set_index(COLUMNS_AWARDS_KEYS)).reset_index()
-
-    def migrateLists(self, lists, delete_orphanded_items):
-        df2 = pd.DataFrame(lists, columns=COLUMNS_LISTS)
-        df2 = df2.drop_duplicates(ignore_index=True)
-
-        if delete_orphanded_items == True:
-            self.lists = df2
-        else:
-            self.lists = self.lists.set_index(COLUMNS_LISTS_KEYS).combine_first(df2.set_index(COLUMNS_LISTS_KEYS)).reset_index()
+    def insertOrUpdateList(self, id, items):
+        with self._lock:
+            df1 = self.lists[(self.lists["ID"] != id)]
+            df2 = pd.DataFrame(items, columns=COLUMNS_LISTS)
+            self.lists = pd.concat([df1,df2]).drop_duplicates(COLUMNS_LISTS_KEYS,keep='last')

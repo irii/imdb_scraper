@@ -52,7 +52,7 @@
         <number>0</number>
        </property>
        <property name="textVisible">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <property name="format">
         <string notr="true">%p%</string>
@@ -65,43 +65,33 @@
         <enum>Qt::LeftToRight</enum>
        </property>
        <property name="text">
-        <string>0 / 0</string>
+        <string/>
        </property>
        <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
      <item>
       <layout class="QGridLayout" name="gridLayout_2">
        <item row="1" column="1">
+        <widget class="QSpinBox" name="spinBox_max_scrape_depth">
+         <property name="value">
+          <number>1</number>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
         <widget class="QLabel" name="label_2">
          <property name="text">
           <string>Max Scrape depth</string>
          </property>
         </widget>
        </item>
-       <item row="1" column="0">
-        <widget class="QCheckBox" name="checkBox_merge">
-         <property name="text">
-          <string>Merge with current database</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="3">
+       <item row="1" column="2">
         <widget class="QPushButton" name="pushButton_begin">
          <property name="text">
           <string>Start</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="2">
-        <widget class="QSpinBox" name="spinBox_max_scrape_depth">
-         <property name="value">
-          <number>1</number>
          </property>
         </widget>
        </item>

@@ -64,6 +64,7 @@ class MainController(QObject):
         return True
 
     def scrape_finished(self):
+        self._windowManager.close_view('SCRAPE')
         self._loadData()
 
     def display_about(self):
