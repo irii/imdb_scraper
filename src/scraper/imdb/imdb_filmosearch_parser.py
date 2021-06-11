@@ -1,15 +1,28 @@
 from bs4 import BeautifulSoup
 from numpy import mat
 from scraper.scrape_container import ScrapeContainer
-from scraper.scraper_source import ScraperParser
+from scraper.scraper_source import ScraperSource
 
 import scraper.imdb.imdb_utils as Utils
 import re
 
-class ImdbFilmoSearchParser(ScraperParser):
+class ImdbFilmoSearchParser(ScraperSource):
+    """This ScraperSource handels all FilmoSearch releated extraction processes.
+    """
     name = "IMDB_FILMOSEARCH"
 
-    def isSupported(self, link) -> str:
+    def isSupported(self, link: str) -> str:
+        """Returns a id if the link is supported this scraper.
+
+        Args:
+            link (str): Requested link
+
+        Returns:
+            str: Unique id
+        """
+        
+        # This scraper supports has mulptiple pages, we have to identify each site with it's own page prefix.
+
         match = Utils.FILMOSEARCH_ID_PARSER_PAGE.match(link)
         if match:
             page = match.group('Page')
@@ -22,6 +35,16 @@ class ImdbFilmoSearchParser(ScraperParser):
         return super().isSupported(link)
 
     def parse(self, container: ScrapeContainer, link: str, priority: int, id: str, soup: BeautifulSoup):
+        """Parses all actor movie mapping based on the given data.
+
+        Args:
+            container (ScrapeContainer): A ScrapeContainer instance
+            link (str): The scrape link
+            priority (int): The scrape priority
+            id (str): The generated unique id
+            soup (BeautifulSoup): The content
+        """
+
         actorMatch = Utils.FILMOSEARCH_EXTRACT_ACTORID_PARSER.match(link)
         if not actorMatch:
             return []

@@ -1,5 +1,10 @@
 # IMDB Scraper by Ivan Radeljak (OTH Regensburg)
 
+## Supports
+- Filmography
+- Biography
+- Awards
+
 ## Requirements
 
 - Python 3.8 or higher
@@ -17,5 +22,3 @@ Ensure that the following python packages are installed:
 
 Execute the following statement in a bash or console:
 ```python main.py```
-
-## How to use

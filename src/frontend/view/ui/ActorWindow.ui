@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>925</width>
-    <height>502</height>
+    <width>1195</width>
+    <height>670</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,33 +17,50 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout" stretch="2,5">
      <property name="sizeConstraint">
-      <enum>QLayout::SetDefaultConstraint</enum>
+      <enum>QLayout::SetMinAndMaxSize</enum>
      </property>
      <item>
-      <layout class="QVBoxLayout" name="verticalLayout_5" stretch="3,1">
+      <layout class="QVBoxLayout" name="verticalLayout_5" stretch="3,4">
        <property name="sizeConstraint">
         <enum>QLayout::SetDefaultConstraint</enum>
        </property>
        <item>
         <widget class="QLabel" name="label_image">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>1</width>
+           <height>1</height>
+          </size>
          </property>
          <property name="text">
           <string/>
          </property>
          <property name="alignment">
-          <set>Qt::AlignCenter</set>
+          <set>Qt::AlignHCenter|Qt::AlignTop</set>
+         </property>
+         <property name="wordWrap">
+          <bool>false</bool>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="label_info">
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+          </font>
+         </property>
          <property name="text">
           <string/>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
          </property>
         </widget>
        </item>
@@ -52,7 +69,7 @@
      <item>
       <widget class="QTabWidget" name="tabWidget_genre">
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tab">
         <attribute name="title">
@@ -71,13 +88,18 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>866</width>
-                <height>782</height>
+                <width>807</width>
+                <height>575</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_10">
                <item>
                 <widget class="QLabel" name="label_biography">
+                 <property name="font">
+                  <font>
+                   <pointsize>10</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
                   <string/>
                  </property>
@@ -119,6 +141,16 @@
             <string>* Movies are sorted by rating</string>
            </property>
           </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="tab_2">
+        <attribute name="title">
+         <string>Rating per Year</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_11">
+         <item>
+          <widget class="QTableView" name="tableView_rating_per_year"/>
          </item>
         </layout>
        </widget>

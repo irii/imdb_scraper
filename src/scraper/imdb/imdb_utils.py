@@ -1,3 +1,6 @@
+"""Utitlity module for scraping imdb
+"""
+
 import re
 
 LIST_ID_PARSER = re.compile(r".*list/(?P<Id>[A-Z0-9]*).*", re.IGNORECASE)
